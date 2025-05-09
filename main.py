@@ -5,7 +5,7 @@ import os
 app = FastAPI()
 
 # Koneksi ke Elasticsearch
-es = Elasticsearch("http://localhost:9200", basic_auth=("elastic", os.environ.get("ELASTIC_PASSWORD", "123456")))
+es = Elasticsearch("http://es:9200", basic_auth=("elastic", os.environ.get("ELASTIC_PASSWORD", "123456")), verify_certs=False)
 
 @app.get("/search")
 def search(q: str = Query(..., description="Search query"), top_k: int = 10):
