@@ -2,7 +2,7 @@ from elasticsearch import Elasticsearch, helpers
 import json
 import os
 
-es = Elasticsearch("http://es:9200", basic_auth=("elastic", os.environ.get("ELASTIC_PASSWORD", "changeme")), verify_certs=False)
+es = Elasticsearch("http://localhost:9200", basic_auth=("elastic", os.environ.get("ELASTIC_PASSWORD", "changeme")), verify_certs=False)
 
 index_name = "scifact"
 
