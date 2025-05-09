@@ -1,15 +1,32 @@
-from typing import Union
-
-from fastapi import FastAPI
+from fastapi import FastAPI, Query
+from elasticsearch import Elasticsearch
+import os
 
 app = FastAPI()
 
+# Koneksi ke Elasticsearch
+es = Elasticsearch("http://localhost:9200", basic_auth=("elastic", os.environ.get("ELASTIC_PASSWORD", "123456")))
 
-@app.get("/")
-def read_root():
-    return {"hello": "world"}
+@app.get("/search")
+def search(q: str = Query(..., description="Search query"), top_k: int = 10):
+    response = es.search(
+        index="scifact",
+        query={
+            "multi_match": {
+                "query": q,
+                "fields": ["title", "text"]
+            }
+        },
+        size=top_k
+    )
 
-
-@app.get("/items/{item_id}")
-def read_item(item_id: int, q: Union[str, None] = None):
-    return {"item_id": item_id, "q": q}
+    results = [
+        {
+            "doc_id": hit["_id"],
+            "score": hit["_score"],
+            "title": hit["_source"]["title"],
+            "text": hit["_source"]["text"][:300]  # dipotong biar ringkas
+        }
+        for hit in response["hits"]["hits"]
+    ]
+    return {"results": results}
