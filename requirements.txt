@@ -2,3 +2,4 @@ fastapi
 fastapi[standard]
 elasticsearch
 ir_datasets
+pandas
