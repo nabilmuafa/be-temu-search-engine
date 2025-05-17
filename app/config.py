@@ -9,4 +9,4 @@ ELASTIC_USER = "elastic"
 ELASTIC_PASSWORD = os.getenv("ELASTIC_PASSWORD", "changeme")
 
 # Index name default
-ELASTIC_INDEX = os.getenv("ELASTIC_INDEX", "wikiclir-en")
+ELASTIC_INDEX = os.getenv("ELASTIC_INDEX", "movies")
