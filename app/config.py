@@ -10,3 +10,6 @@ ELASTIC_PASSWORD = os.getenv("ELASTIC_PASSWORD", "changeme")
 
 # Index name default
 ELASTIC_INDEX = os.getenv("ELASTIC_INDEX", "movies")
+
+# LLM settings
+LLM_MODEL_ID = os.getenv("LLM_MODEL_ID", "Qwen/Qwen2.5-0.5B-Instruct")

@@ -4,3 +4,7 @@ elasticsearch
 ir_datasets
 pandas
 python-dotenv
+transformers
+torch
+sentencepiece
+pydantic
