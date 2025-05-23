@@ -10,7 +10,7 @@ class RerankerService:
         self.model = CrossEncoder('cross-encoder/ms-marco-MiniLM-L-6-v2', device='cuda' if torch.cuda.is_available() else 'cpu')
         print("Reranker model loaded successfully")
 
-    def rerank(self, query: str, results: List[Dict[Any, Any]], top_k: int = 10) -> List[Dict[Any, Any]]:
+    def rerank(self, query: str, results: List[Dict[Any, Any]], top_k: int = 100) -> List[Dict[Any, Any]]:
         """
         Rerank search results using the cross-encoder model.
         
@@ -26,7 +26,13 @@ class RerankerService:
             return results
 
         # Prepare pairs of (query, document text) for scoring
-        pairs = [(query, f"{result['title']} {result['plot'][:300]}") for result in results]
+        pairs = []
+        for result in results:
+            # Create a more focused text representation for scoring
+            doc_text = f"Title: {result['title']}\nPlot: {result['plot'][:300]}"
+            if 'tags' in result:
+                doc_text += f"\nGenres: {', '.join(result['tags'])}"
+            pairs.append((query, doc_text))
         
         # Get similarity scores from the cross-encoder
         scores = self.model.predict(pairs)

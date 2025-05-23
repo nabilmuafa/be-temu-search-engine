@@ -66,15 +66,26 @@ class LLMService:
         # Get only the top result
         top_result = search_results[0]
         
-        # Create a prompt that includes the query and top result
-        prompt = f"""
-Search Query: {query}
+        # Create a focused prompt for movie summary
+        prompt = f"""Task: Create a brief, focused summary of how this movie relates to the search query "{query}".
 
-Top Search Result:
+Movie Information:
 Title: {top_result['title']}
-Description: {top_result['plot']}
+Plot: {top_result['plot']}
 
-Please provide a brief summary of this search result in relation to the query:"""
+Requirements:
+1. Maximum 2-3 sentences
+2. Focus only on aspects relevant to "{query}"
+3. Be direct and concise
+4. Do not mention the search query itself
+5. Do not include meta-commentary or analysis
+6. Do not repeat these instructions
+
+Summary:"""
         
-        # Generate summary using the LLM with a shorter max length since we're only summarizing one result
-        return self.generate(prompt, max_length=512) 
+        # Generate summary with strict parameters
+        return self.generate(
+            prompt, 
+            max_length=256,  # Shorter max length to enforce brevity
+            temperature=0.2   # Lower temperature for more focused output
+        ) 
