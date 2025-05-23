@@ -9,3 +9,4 @@ torch
 sentencepiece
 pydantic
 accelerate
+sentence-transformers
