@@ -28,12 +28,14 @@ class LLMService:
         Returns:
             The generated text
         """
-        inputs = self.tokenizer(prompt, return_tensors="pt").to(self.model.device)
+        inputs = self.tokenizer(prompt, return_tensors="pt", padding=True)
+        inputs = {k: v.to(self.model.device) for k, v in inputs.items()}
         
         # Generate text
         with torch.no_grad():
             generated_ids = self.model.generate(
-                inputs.input_ids,
+                inputs["input_ids"],
+                attention_mask=inputs["attention_mask"],
                 max_length=max_length,
                 temperature=temperature,
                 do_sample=True,
@@ -57,18 +59,22 @@ class LLMService:
         Returns:
             A summary or enhanced explanation of the search results
         """
-        # Create a prompt that includes the query and search results
+        # Check if we have any results
+        if not search_results:
+            return "No search results found for this query."
+            
+        # Get only the top result
+        top_result = search_results[0]
+        
+        # Create a prompt that includes the query and top result
         prompt = f"""
 Search Query: {query}
 
-Search Results:
-"""
+Top Search Result:
+Title: {top_result['title']}
+Description: {top_result['plot']}
+
+Please provide a brief summary of this search result in relation to the query:"""
         
-        # Add top search results to the prompt
-        for i, result in enumerate(search_results[:5]):  # Use top 5 results
-            prompt += f"\n{i+1}. {result['title']}\n   {result['plot']}\n"
-            
-        prompt += "\nPlease provide a brief summary of these search results related to the query:"
-        
-        # Generate summary using the LLM
-        return self.generate(prompt, max_length=1024) 
+        # Generate summary using the LLM with a shorter max length since we're only summarizing one result
+        return self.generate(prompt, max_length=512) 
