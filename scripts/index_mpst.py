@@ -39,7 +39,7 @@ with open("data/mpst_docs.jsonl", "r", encoding="utf-8") as f:
 
         if len(actions) >= 1000:
             helpers.bulk(es, actions)
-            print(f"Indexed 1000 docs...")
+            print("Indexed 1000 docs...")
             actions = []
 
 # Index sisa dokumen
