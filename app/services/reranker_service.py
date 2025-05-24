@@ -29,7 +29,7 @@ class RerankerService:
         pairs = []
         for result in results:
             # Create a more focused text representation for scoring
-            doc_text = f"Title: {result['title']}\nPlot: {result['plot'][:300]}"
+            doc_text = f"Title: {result['title']}\nPlot: {result['plot']}"
             if 'tags' in result:
                 doc_text += f"\nGenres: {', '.join(result['tags'])}"
             pairs.append((query, doc_text))
