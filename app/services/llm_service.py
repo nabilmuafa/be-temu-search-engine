@@ -15,22 +15,22 @@ class LLMService:
             device_map="auto"  # Automatically use available GPUs or fallback to CPU
         )
         print("LLM model loaded successfully")
-        
+
     def generate(self, prompt: str, max_length: int = 512, temperature: float = 0.7) -> str:
         """
         Generate text using the loaded LLM.
-        
+
         Args:
             prompt: The input prompt for the model
             max_length: Maximum length of the generated text
             temperature: Controls randomness of output (lower is more deterministic)
-            
+
         Returns:
             The generated text
         """
         inputs = self.tokenizer(prompt, return_tensors="pt", padding=True)
         inputs = {k: v.to(self.model.device) for k, v in inputs.items()}
-        
+
         # Generate text
         with torch.no_grad():
             generated_ids = self.model.generate(
@@ -41,31 +41,31 @@ class LLMService:
                 do_sample=True,
                 pad_token_id=self.tokenizer.eos_token_id
             )
-        
+
         # Decode the generated ids to text
         generated_text = self.tokenizer.decode(generated_ids[0], skip_special_tokens=True)
-        
+
         # Return only the newly generated text (remove the input prompt)
         return generated_text.replace(prompt, "").strip()
-    
+
     def enhance_search_results(self, query: str, search_results: List[Dict[Any, Any]]) -> str:
         """
         Enhance search results with LLM summary.
-        
+
         Args:
             query: The user's search query
             search_results: List of search results from Elasticsearch
-            
+
         Returns:
             A summary or enhanced explanation of the search results
         """
         # Check if we have any results
         if not search_results:
             return "No search results found for this query."
-            
+
         # Get only the top result
         top_result = search_results[0]
-        
+
         # Create a focused prompt for movie summary
         prompt = f"""Task: Create a brief, focused summary of how this movie relates to the search query "{query}".
 
@@ -82,10 +82,10 @@ Requirements:
 6. Do not repeat these instructions
 
 Summary:"""
-        
+
         # Generate summary with strict parameters
         return self.generate(
-            prompt, 
+            prompt,
             max_length=256,  # Shorter max length to enforce brevity
             temperature=0.2   # Lower temperature for more focused output
-        ) 
+        )
