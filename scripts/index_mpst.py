@@ -1,50 +1,45 @@
-from elasticsearch import Elasticsearch, helpers
 import json
 import os
+import sys
+from pathlib import Path
 
-# Inisialisasi koneksi Elasticsearch
-es = Elasticsearch("http://localhost:9200",
-                   basic_auth=("elastic", os.environ.get("ELASTIC_PASSWORD", "changeme")),
-                   verify_certs=False)
+# Add the project root to Python path for imports
+project_root = Path(__file__).parent.parent
+sys.path.append(str(project_root))
 
-index_name = "movies"
+from app.services.indexing_service import IndexingService
 
-# Cek dan buat index jika belum ada
-if not es.indices.exists(index=index_name):
-    es.indices.create(index=index_name, body={
-        "mappings": {
-            "properties": {
-                "title": {"type": "text"},
-                "plot": {"type": "text"},
-                "tags": {"type": "keyword"}
-            }
-        }
-    })
-    print(f"Index '{index_name}' dibuat.")
-
-# Persiapkan indexing batch
-actions = []
-with open("data/mpst_docs.jsonl", "r", encoding="utf-8") as f:
-    for line in f:
-        doc = json.loads(line)
-        actions.append({
-            "_index": index_name,
-            "_id": doc["doc_id"],
-            "_source": {
+def main():
+    print("Starting MPST indexing process...")
+    
+    # Initialize indexing service
+    indexer = IndexingService()
+    
+    # Create fresh index with proper mappings
+    print("Creating index with mappings...")
+    indexer.create_index(force=True)
+    
+    # Read and prepare documents
+    docs = []
+    print("Reading MPST documents...")
+    with open("data/mpst_docs.jsonl", "r", encoding="utf-8") as f:
+        for line in f:
+            doc = json.loads(line)
+            docs.append({
+                "id": doc["doc_id"],
                 "title": doc["title"],
                 "plot": doc["plot"],
                 "tags": doc["tags"]
-            }
-        })
+            })
+    
+    # Index documents in batches
+    total_docs = len(docs)
+    print(f"Found {total_docs} documents. Starting indexing with doc2query expansion...")
+    
+    batch_size = 100  # Smaller batch size since we're doing doc2query expansion
+    indexer.bulk_index(docs, batch_size=batch_size)
+    
+    print("Indexing completed successfully!")
 
-        if len(actions) >= 1000:
-            helpers.bulk(es, actions)
-            print(f"Indexed 1000 docs...")
-            actions = []
-
-# Index sisa dokumen
-if actions:
-    helpers.bulk(es, actions)
-    print(f"Indexed {len(actions)} docs (final batch)")
-
-print("Indexing selesai.")
+if __name__ == "__main__":
+    main()
