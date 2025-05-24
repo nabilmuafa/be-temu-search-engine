@@ -1,11 +1,13 @@
 from fastapi import APIRouter, Query
 from typing import Optional, List
 from app.services.retrieval_service import RetrievalService
+from app.services.reranker_service import RerankerService
 from app.services.llm_service import LLMService
 from pydantic import BaseModel, Field
 
 router = APIRouter()
 retrieval = RetrievalService()
+reranker = RerankerService()
 llm_service = LLMService()
 
 class GenerateRequest(BaseModel):
@@ -48,30 +50,59 @@ async def generate_text(
     )
     return {"generated_text": generated_text}
 
-@router.get("/enhanced-search", summary="Search with LLM enhancement")
+@router.get("/enhanced-search", summary="Search with LLM enhancement and optional reranking")
 async def enhanced_search(
     query: str = Query(..., min_length=1, description="Search query text"),
-    top_k: int = Query(default=10, ge=1, le=50, description="Number of results to return"),
+    initial_top_k: int = Query(default=50, ge=1, le=100, description="Number of initial results to fetch before reranking"),
+    apply_rerank: bool = Query(default=True, description="Whether to apply reranking to results"),
+    final_top_k: int = Query(default=30, ge=1, le=50, description="Number of results to return after potential reranking"),
     tags: Optional[List[str]] = Query(default=None, description="Optional list of tags to filter results")
 ):
     """
-    Search using Elasticsearch and enhance results with LLM summary.
+    Search using Elasticsearch, optionally rerank, and enhance results with LLM summary.
+    
+    Process:
+    1. Retrieves initial results using Elasticsearch (BM25) - controlled by `initial_top_k`.
+    2. If `apply_rerank` is true, reranks the initial results using a neural cross-encoder model.
+    3. Returns the top `final_top_k` results.
+    4. Generates an LLM summary based on the (potentially reranked) top result(s).
     
     Parameters:
     - query: Search query text
-    - top_k: Number of results to return (1-50)
+    - initial_top_k: Number of initial results to fetch (1-100, default 50)
+    - apply_rerank: Whether to apply reranking (defaults to True)
+    - final_top_k: Number of results to return after reranking (1-50, default 30)
     - tags: Optional list of tags to filter results
     
     Returns:
-    - results: List of search results
-    - summary: LLM-generated summary of the top result
+    - results: List of search results, potentially reranked.
+    - summary: LLM-generated summary of the top result(s).
     """
-    results = retrieval.search(query, top_k, tags)
+    # Get initial results
+    initial_results = retrieval.search(
+        query=query,
+        top_k=initial_top_k,
+        tags=tags
+    )
     
-    # Generate summary using LLM
-    summary = llm_service.enhance_search_results(query, results)
+    processed_results = initial_results
+
+    # Apply reranking if enabled and results exist
+    if apply_rerank and initial_results:
+        processed_results = reranker.rerank(
+            query=query,
+            results=initial_results,
+            top_k=final_top_k  # Reranker returns the final desired number of results
+        )
+    elif initial_results: # If not reranking, but have results, take the top final_top_k
+        processed_results = initial_results[:final_top_k]
+    else: # No initial results
+        processed_results = []
+
+    # Generate summary using LLM based on the processed (reranked or sliced) results
+    summary = llm_service.enhance_search_results(query, processed_results)
     
     return {
-        "results": results,
+        "results": processed_results,
         "summary": summary
     } 
