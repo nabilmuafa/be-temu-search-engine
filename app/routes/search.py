@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Query
 from typing import Optional, List
 from app.services.retrieval_service import RetrievalService
 from app.services.reranker_service import RerankerService
@@ -26,8 +26,14 @@ class SearchRequest(BaseModel):
             }
         }
 
-@router.post("/search", summary="Search movies with reranking")
-async def search(request: SearchRequest):
+@router.get("/search", summary="Search movies with reranking")
+async def search(
+    query: str = Query(..., min_length=1, description="Search query text"),
+    top_k: int = Query(default=100, ge=1, le=100, description="Number of initial results to fetch"),
+    tags: Optional[List[str]] = Query(default=None, description="Optional list of tags to filter results"),
+    rerank: bool = Query(default=True, description="Whether to apply reranking to results"),
+    rerank_top_k: int = Query(default=100, ge=1, le=100, description="Number of results to return after reranking")
+):
     """
     Search for movies using Elasticsearch with neural reranking.
     
@@ -48,17 +54,17 @@ async def search(request: SearchRequest):
     """
     # Get initial results
     results = retrieval.search(
-        query=request.query,
-        top_k=request.top_k,
-        tags=request.tags
+        query=query,
+        top_k=top_k,
+        tags=tags
     )
 
     # Apply reranking if enabled (default is True)
-    if request.rerank and results:
+    if rerank and results:
         results = reranker.rerank(
-            query=request.query,
+            query=query,
             results=results,
-            top_k=request.rerank_top_k
+            top_k=rerank_top_k
         )
 
     return {"results": results}
