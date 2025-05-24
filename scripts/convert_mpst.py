@@ -11,7 +11,7 @@ input_file = kagglehub.dataset_download(
     "cryptexcode/mpst-movie-plot-synopses-with-tags")
 output_file = "data/mpst_docs.jsonl"
 
-df = pd.read_csv(input_file + "/mpst_movie_plots.csv", encoding="utf-8")
+df = pd.read_csv(input_file + "/mpst_full_data.csv", encoding="utf-8")
 
 with open(output_file, "w", encoding="utf-8") as f:
     for _, row in df.iterrows():
