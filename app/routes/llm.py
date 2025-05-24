@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Query, Depends
+from fastapi import APIRouter, Query
 from typing import Optional, List
 from app.services.retrieval_service import RetrievalService
 from app.services.llm_service import LLMService
@@ -27,8 +27,12 @@ class SearchRequest(BaseModel):
             }
         }
 
-@router.post("/generate", summary="Generate text using LLM")
-async def generate_text(request: GenerateRequest):
+@router.get("/generate", summary="Generate text using LLM")
+async def generate_text(
+    prompt: str = Query(..., description="The text prompt to generate from"),
+    max_length: int = Query(default=512, ge=1, le=2048, description="Maximum length of generated text"),
+    temperature: float = Query(default=0.7, ge=0.1, le=2.0, description="Temperature for text generation")
+):
     """
     Generate text using the LLM model.
     
@@ -38,14 +42,18 @@ async def generate_text(request: GenerateRequest):
     - temperature: Controls randomness (0.1-2.0, lower is more deterministic)
     """
     generated_text = llm_service.generate(
-        request.prompt, 
-        max_length=request.max_length,
-        temperature=request.temperature
+        prompt=prompt, 
+        max_length=max_length,
+        temperature=temperature
     )
     return {"generated_text": generated_text}
 
-@router.post("/enhanced-search", summary="Search with LLM enhancement")
-async def enhanced_search(request: SearchRequest):
+@router.get("/enhanced-search", summary="Search with LLM enhancement")
+async def enhanced_search(
+    query: str = Query(..., min_length=1, description="Search query text"),
+    top_k: int = Query(default=10, ge=1, le=50, description="Number of results to return"),
+    tags: Optional[List[str]] = Query(default=None, description="Optional list of tags to filter results")
+):
     """
     Search using Elasticsearch and enhance results with LLM summary.
     
@@ -58,10 +66,10 @@ async def enhanced_search(request: SearchRequest):
     - results: List of search results
     - summary: LLM-generated summary of the top result
     """
-    results = retrieval.search(request.query, request.top_k, request.tags)
+    results = retrieval.search(query, top_k, tags)
     
     # Generate summary using LLM
-    summary = llm_service.enhance_search_results(request.query, results)
+    summary = llm_service.enhance_search_results(query, results)
     
     return {
         "results": results,
