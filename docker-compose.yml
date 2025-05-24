@@ -41,19 +41,19 @@ services:
       retries: 120 
       start_period: 60s
 
-    caddy:
-      image: caddy:latest
-      container_name: caddy
-      restart: unless-stopped
-      ports:
-        - "80:80"
-        - "443:443"
-      volumes:
-        - caddy_data:/data
-        - caddy_config:/config
-        - ./Caddyfile:/etc/caddy/Caddyfile
-      depends_on:
-        - web
+  caddy:
+    image: caddy:latest
+    container_name: caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+      - ./Caddyfile:/etc/caddy/Caddyfile
+    depends_on:
+      - web
 
 volumes:
   certs:
