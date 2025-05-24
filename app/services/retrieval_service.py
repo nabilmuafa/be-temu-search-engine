@@ -40,7 +40,7 @@ class RetrievalService:
                 "doc_id": hit["_id"],
                 "score": hit["_score"],
                 "title": hit["_source"]["title"],
-                "plot": hit["_source"]["plot"][:300],
+                "plot": hit["_source"]["plot"],
                 "tags": hit["_source"]["tags"],
                 "source": hit["_source"]["source"]
             }
