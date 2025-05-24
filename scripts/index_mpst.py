@@ -1,10 +1,9 @@
 from elasticsearch import Elasticsearch, helpers
 import json
 import os
-from app.config import ELASTIC_HOST
 
 # Inisialisasi koneksi Elasticsearch
-es = Elasticsearch(ELASTIC_HOST,
+es = Elasticsearch("http://es:9200",
                    basic_auth=("elastic", os.environ.get(
                        "ELASTIC_PASSWORD", "changeme")),
                    verify_certs=False)
