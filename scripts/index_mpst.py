@@ -17,7 +17,8 @@ if not es.indices.exists(index=index_name):
             "properties": {
                 "title": {"type": "text"},
                 "plot": {"type": "text"},
-                "tags": {"type": "keyword"}
+                "tags": {"type": "keyword"},
+                "source": {"type": "keyword"},
             }
         }
     })
@@ -34,7 +35,8 @@ with open("data/mpst_docs.jsonl", "r", encoding="utf-8") as f:
             "_source": {
                 "title": doc["title"],
                 "plot": doc["plot"],
-                "tags": doc["tags"]
+                "tags": doc["tags"],
+                "source": doc["source"]
             }
         })
 

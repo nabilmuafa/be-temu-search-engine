@@ -19,7 +19,8 @@ with open(output_file, "w", encoding="utf-8") as f:
             "doc_id": row["imdb_id"],
             "title": row["title"],
             "plot": row["plot_synopsis"],
-            "tags": [tag.strip() for tag in str(row["tags"]).split(",") if tag.strip()]
+            "tags": [tag.strip() for tag in str(row["tags"]).split(",") if tag.strip()],
+            "source": row["synopsis_source"]
         }, f)
         f.write("\n")
 
