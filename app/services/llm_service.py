@@ -53,7 +53,7 @@ class LLMService:
 
         # Decode the generated ids to text
         generated_text = self.tokenizer.decode(generated_ids[0], skip_special_tokens=True)
-        print(generated_text)
+        
         # Return only the newly generated text (remove the input prompt)
         # Ensure prompt is not part of the generated_text for cases where it might be identical or a substring at the start
         if generated_text.startswith(prompt):
