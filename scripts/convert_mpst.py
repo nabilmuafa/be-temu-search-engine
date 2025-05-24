@@ -1,4 +1,5 @@
 import pandas as pd
+import kagglehub
 import json
 import os
 
@@ -6,7 +7,8 @@ import os
 os.makedirs("data", exist_ok=True)
 
 # Baca file CSV
-input_file = "data/mpst_full_data.csv"
+input_file = kagglehub.dataset_download(
+    "cryptexcode/mpst-movie-plot-synopses-with-tags")
 output_file = "data/mpst_docs.jsonl"
 
 df = pd.read_csv(input_file)
